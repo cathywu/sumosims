@@ -198,6 +198,11 @@ class LoopSim:
 
     def _run(self, simSteps, speedRange, sumo):
         vid_path = ensure_dir("%s/%s" % (self.vid_path, self.name+"-"+self.label))
+
+        state = {}
+        for v in self.carNames:
+            state[v] = []
+
         for step in range(simSteps):
             traci.simulationStep()
             self.allCars = []
@@ -219,7 +224,7 @@ class LoopSim:
                 self._setCarColor(car, speedRange)
                 carFn = self.carFns[car["type"]]
                 if carFn is not None:
-                    carFn((idx, car), self, step)
+                    state[car["id"]] = carFn((idx, car), self, step, state=state[car["id"]])
             if sumo == "sumo-gui":
                 # Save a frame of the gui output to file 
                 # Combine all frames to make a video animation of sim results

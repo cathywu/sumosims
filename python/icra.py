@@ -15,9 +15,9 @@ if __name__ == "__main__":
 
     hParams = humanParams
     hParams["laneSpread"] = globalLaneSpread
-    hParams["tau"] = 2
-    hParams["speedDev"] = 0.2
-    hParams["speedFactor"] = 1.1
+    hParams["tau"] = 1
+    hParams["speedDev"] = 0
+    hParams["speedFactor"] = 1
     hParams["minGap"] = 1
 
     hParams1 = copy.copy(humanParams)
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     ###############
 
     numLanes = 1
-    totVehicles = 11
+    totVehicles = 5
 
     '''
     sigmaValues = [0.5, 0.9]
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     # WARNING SUMO can't really handle more than 2 fps, probably due to limitations of underlying car following models
     # TODO(cathywu) develop our own high resolution car following models?
-    fps = 2
+    fps = 10
     simStepLength = 1./fps
     simTime = 100
     simSteps = int(simTime/simStepLength)

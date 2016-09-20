@@ -5,7 +5,7 @@ from carfns import randomChangeLaneFn, ACCFnBuilder, changeFasterLaneBuilder,\
 import config as defaults
 
 # changeFasterLane = changeFasterLaneBuilder()
-changeFasterLane = changeFasterLaneBuilder(likelihood_mult=0.5, speedThreshold=2, bias=1)
+changeFasterLane = changeFasterLaneBuilder(likelihood_mult=0.5, speedThreshold=2, bias=1, delay=1)
 basicHumanParams = {
     "name"        : "human",
     "shape"       : "passenger",

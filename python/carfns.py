@@ -4,15 +4,15 @@ from numpy import mean
 import traci
 
 
-def randomChangeLaneFn((idx, car), sim, step):
+def randomChangeLaneFn((idx, car), sim, step, state=None):
     li = car["lane"]
     if random.random() > .99:
         traci.vehicle.changeLane(car["id"], 1-li, 1000)
 
 
-def changeFasterLaneBuilder(speedThreshold = 5, likelihood_mult = 0.5, 
+def changeFasterLaneBuilder(speedThreshold = 5, likelihood_mult = 0.5,
                             dxBack = 0, dxForward = 60, 
-                            gapBack = 10, gapForward = 5, bias=0):
+                            gapBack = 10, gapForward = 5, bias=0, delay=0):
     """
     Intelligent lane changer
     :param speedThreshold: minimum speed increase required
@@ -24,7 +24,17 @@ def changeFasterLaneBuilder(speedThreshold = 5, likelihood_mult = 0.5,
     :param bias: additive speed bias term (m/s)
     :return: carFn to input to a carParams
     """
-    def carFn((idx, car), sim, step):
+    def carFn((idx, car), sim, step, state=None):
+        if delay > 0:
+            if type(delay) is not int:
+                return NotImplementedError
+            state.append(traci.vehicle.getSpeed(car["id"]))
+            if len(state) > delay:
+                if idx == 0:
+                    print state
+                new_v = state.pop(0)
+                traci.vehicle.setSpeed(car["id"], new_v)
+
         v = [0] * sim.numLanes
         for lane in range(sim.numLanes):
             if sim.getCars(idx, dxBack=gapBack, dxForward=gapForward, lane=lane):
@@ -44,6 +54,8 @@ def changeFasterLaneBuilder(speedThreshold = 5, likelihood_mult = 0.5,
            (maxv - myv) > speedThreshold and \
            random.random() < likelihood_mult * car["f"]:
             traci.vehicle.changeLane(car["id"], maxl, 10000)
+
+        return state
     return carFn
 
 
@@ -57,7 +69,7 @@ def ACCFnBuilder(follow_sec = 3.0, max_speed = 26.8, gain = 0.01, beta = 0.5):
     :return: ACCFn to input to a carParams
     """
 
-    def ACCFn((idx, car), sim, step):
+    def ACCFn((idx, car), sim, step, state=None):
         """
         :param idx:
         :param car:
@@ -112,7 +124,7 @@ def MidpointFnBuilder(max_speed = 26.8, gain = 0.1, beta = 0.5, duration = 500, 
     :return: MidpointFn as input to a carParams
     """
 
-    def MidpointFn((idx, car), sim, step):
+    def MidpointFn((idx, car), sim, step, state=None):
         """
         :param idx:
         :param car:
@@ -161,7 +173,7 @@ def FillGapFnBuilder(duration=500, gap_back=10, gap_forward=5, gap_threshold=10)
     :param gap_threshold: Minimum required gap difference between current lane and next lane
     :return: carFn to input to a carParams
     """
-    def carFn((idx, car), sim, step):
+    def carFn((idx, car), sim, step, state=None):
         gap = [0] * sim.numLanes
         new_speed = [0] * sim.numLanes
         for lane in range(sim.numLanes):
@@ -206,7 +218,7 @@ def FillGapMidpointFnBuilder(duration=500, gap_back=10, gap_forward=5,
             as following distance (default is 0.5=midpoint)
     :return: carFn to input to a carParams
     """
-    def carFn((idx, car), sim, step):
+    def carFn((idx, car), sim, step, state=None):
         gap = [0] * sim.numLanes
         new_speed = [0] * sim.numLanes
         for lane in range(sim.numLanes):
@@ -275,7 +287,7 @@ def SwitchVTypeFn(car_type, switch_point, initCarFn=None):
     :return:
     """
 
-    def CarFn((idx, car), sim, step):
+    def CarFn((idx, car), sim, step, state=None):
         if initCarFn is not None:
             initCarFn((idx, car), sim, step)
         if step == int(float(sim.simSteps) * switch_point):
@@ -292,7 +304,7 @@ def SwitchFn(switchList):
     :return:
     """
 
-    def CarFn((idx, car), sim, step):
+    def CarFn((idx, car), sim, step, state=None):
         selected = None
         for (switchPoint, function) in switchList:
             if step >= sim.simSteps * switchPoint:
